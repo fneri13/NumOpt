@@ -1,5 +1,5 @@
 import numpy as np
-from NumOpt.functions import complexStepGradient
+from NumOpt.gradient import complexStepGradient
 
 def backtracking(f, x0, maxIter=100, tol=1e-6, alpha0=1.0, mu=1e-4):
     """backtracking algorithm for step decision

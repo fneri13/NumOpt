@@ -62,6 +62,8 @@ build
 # Log files
 *.log
 
+*/pycache/*
+
 # Package files
 *.jar
 
@@ -107,3 +109,4 @@ Thumbs.db
 *.dat
 *.curve
 __pycache__
+NumOpt/__pycache__/
