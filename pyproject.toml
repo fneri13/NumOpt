@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "NumOpt"
+version = "0.1.0"
+description = "Solution of numerical optimization problems taken from Martins book"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+    { name="Francesco neri", email="francesconeri95@gmail.com" }
+]
+
+# Runtime dependencies
+dependencies = [
+    "numpy",
+    "scipy",
+    "matplotlib"
+]
