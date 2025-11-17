@@ -1,7 +1,0 @@
-pyproject.toml
-NumOpt/__init__.py
-NumOpt.egg-info/PKG-INFO
-NumOpt.egg-info/SOURCES.txt
-NumOpt.egg-info/dependency_links.txt
-NumOpt.egg-info/requires.txt
-NumOpt.egg-info/top_level.txt
