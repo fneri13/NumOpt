@@ -18,7 +18,7 @@ class OptimizationProblem:
         self.solution = None
         self.objValue = None
         self.gradFunction = complexStepGradient
-        self.minHistory = []
+        self.history = {"x": [], "fval": [], "grad": [], "dir": []}
 
 
     def setObjectiveFunction(self, x, *fargs):
@@ -49,45 +49,68 @@ class OptimizationProblem:
 
     def solve(self, x0=None, directionMethod='steepest_descent', stepMethod='backtracking', options=None):
         
-        
-        #secutiry check
+        # security check
         if self.objFunction is None:
             raise ValueError("Objective function not set.")
-        
-        # initial guess
-        if x0 is None:
-            x0 = np.random.rand(self.nDim)
-        x = np.array(x0, dtype=float)
-        self.minHistory.append(x.copy())
         
         # convergence criteria
         maxiter = options.get('maxiter', 1000) if options else 1000
         tol = options.get('tol', 1e-6) if options else 1e-6
-
+        
+        # initialization
+        if x0 is None:
+            x0 = np.random.rand(self.nDim)
+        x = np.array(x0, dtype=float)
+        fval = self.objFunction(x, *self.objFunctionArgs)
+        grad = self.gradFunction(self.objFunction,x, *self.objFunctionArgs)
+        direction = -grad/np.linalg.norm(grad)
+        self.history['x'].append(x)
+        self.history['fval'].append(fval)
+        self.history['grad'].append(grad)
+        self.history['dir'].append(direction)
+        
         # start iterations
         for k in range(maxiter):
-            fval = self.objFunction(x, *self.objFunctionArgs)
-            grad = self.gradFunction(self.objFunction,x, *self.objFunctionArgs)
             
+            # check convergence
             if np.linalg.norm(grad) < tol:
                 break
-
+            
+            # compute search direction
             if directionMethod == 'steepest_descent':
                 direction = - grad/np.linalg.norm(grad)
+            elif (directionMethod == 'conjugate_gradient'):
+                if k == 0 or k%(self.nDim*1) == 0: 
+                    direction = - grad/np.linalg.norm(grad)
+                else:
+                    gradOld = self.history['grad'][-2]
+                    directionOld = self.history['dir'][-2]
+                    # beta = np.dot(grad, (grad - gradOld)) / np.dot(gradOld, gradOld)
+                    # beta = max(0, beta)  # ensure beta is non-negative
+                    beta = np.dot(grad, grad) / np.dot(gradOld, gradOld)
+                    direction = - grad + beta * directionOld
+                    direction = direction / np.linalg.norm(direction)
             else:
                 raise NotImplementedError(f"Direction '{direction}' not implemented.")
 
+            # compute step size
             if stepMethod == 'backtracking':
                 alpha = linesearchBacktracking(self.objFunction, x, direction, self.gradFunction)
+            elif stepMethod == 'fixed':
+                alpha = options.get('step_size', 1e-2) if options else 1e-2
             else:
                 raise NotImplementedError(f"Line search '{stepMethod}' not implemented.")  # fixed small step if no line search
 
+            # update solution
             x = x + alpha * direction
-            self.minHistory.append(x.copy())
+            fval = self.objFunction(x, *self.objFunctionArgs)
+            grad = self.gradFunction(self.objFunction,x, *self.objFunctionArgs)
+            self.history['x'].append(x)
+            self.history['dir'].append(direction)
+            self.history['fval'].append(fval)
+            self.history['grad'].append(grad)
 
-        self.solution = x
-        self.objValue = self.objFunction(x)
-        return self.minHistory
+        return self.history
 
 
     def plotSolutionHistory(self, history):
@@ -107,13 +130,21 @@ class OptimizationProblem:
         plt.contourf(X, Y, F, levels=25, cmap='viridis')
         plt.contour(X, Y, F, levels=25, colors='k', linewidths=0.25)
         
-        history = np.array(history)
-        plt.plot(history[:, 0], history[:, 1], 'r--^', label='Trajectory')
-        plt.plot(history[0, 0], history[0, 1], 'k^', label='Start')
+        x = np.array(history['x'])
+        plt.plot(x[:, 0], x[:, 1], 'r--^', label='Trajectory')
+        plt.plot(x[0, 0], x[0, 1], 'k^', label='Start')
         plt.xlabel(r'$x_1$')
         plt.ylabel(r'$x_2$')
-        plt.title('Optimization trajectory - Iterations: {}'.format(len(history)-1))
+        plt.title('Optimization trajectory - Iterations: {}'.format(len(x)-1))
         plt.legend()
+        
+        
+        plt.figure()
+        fval = np.array(history['fval'])
+        plt.semilogy(fval)
+        plt.xlabel('Iteration')
+        plt.ylabel('Objective function value')
+        plt.grid(alpha=0.2)
         
 
 
