@@ -1,7 +1,7 @@
 import numpy as np
 from NumOpt.gradient import complexStepGradient
 
-def backtracking(f, x0, maxIter=100, tol=1e-6, alpha0=1.0, mu=1e-4):
+def backtracking(f, x0, *fargs, maxIter=100, tol=1e-6, alpha0=1.0, mu=1e-4):
     """backtracking algorithm for step decision
 
     Args:
@@ -16,19 +16,19 @@ def backtracking(f, x0, maxIter=100, tol=1e-6, alpha0=1.0, mu=1e-4):
         _type_: min and history of locations
     """
     k = 0
-    fval = f(x0)
-    grad = complexStepGradient(f, x0)
+    fval = f(x0, *fargs)
+    grad = complexStepGradient(f, x0, *fargs)
     alpha = alpha0
     xhist = [x0.copy()]
     
     while (np.linalg.norm(grad) > tol and k < maxIter):
         gradDir = grad / np.linalg.norm(grad)
         xnew = x0 - alpha * gradDir
-        fnew = f(xnew)
+        fnew = f(xnew, *fargs)
         if fnew < fval - mu * alpha * np.dot(grad, gradDir):
             x0 = xnew
             fval = fnew
-            grad = complexStepGradient(f, x0)
+            grad = complexStepGradient(f, x0, *fargs)
             xhist.append(xnew)
             k += 1
         else:

@@ -1,6 +1,6 @@
 import numpy as np
 
-def complexStepGradient(f, x, h=1e-12):
+def complexStepGradient(f, x, *args, h=1e-12):
     """
     Compute the gradient of f at point x using the complex step method.
     
@@ -21,5 +21,5 @@ def complexStepGradient(f, x, h=1e-12):
     for i in range(n):
         x_step = np.array(x, dtype=complex)
         x_step[i] += 1j * h
-        grad[i] = np.imag(f(x_step)) / h
+        grad[i] = np.imag(f(x_step, *args)) / h
     return grad
