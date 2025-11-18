@@ -108,5 +108,5 @@ Thumbs.db
 *.vtu
 *.dat
 *.curve
-__pycache__
-NumOpt/__pycache__/
+*.pyc
+__pycache__/
