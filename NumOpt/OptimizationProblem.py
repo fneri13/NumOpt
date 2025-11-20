@@ -1,6 +1,5 @@
 import numpy as np
 from NumOpt.gradient import complexStepGradient
-from NumOpt.linesearch import linesearchBacktracking
 import matplotlib.pyplot as plt
 # from NumOpt.styles import *
 
@@ -80,22 +79,20 @@ class OptimizationProblem:
             if directionMethod == 'steepest_descent':
                 direction = - grad/np.linalg.norm(grad)
             elif (directionMethod == 'conjugate_gradient'):
-                if k == 0 or k%(self.nDim*1) == 0: 
+                if k == 0 or k%self.nDim == 0: 
                     direction = - grad/np.linalg.norm(grad)
                 else:
                     gradOld = self.history['grad'][-2]
                     directionOld = self.history['dir'][-2]
-                    # beta = np.dot(grad, (grad - gradOld)) / np.dot(gradOld, gradOld)
-                    # beta = max(0, beta)  # ensure beta is non-negative
                     beta = np.dot(grad, grad) / np.dot(gradOld, gradOld)
                     direction = - grad + beta * directionOld
-                    direction = direction / np.linalg.norm(direction)
+                    # direction = direction / np.linalg.norm(direction)
             else:
-                raise NotImplementedError(f"Direction '{direction}' not implemented.")
+                raise NotImplementedError(f"Direction '{directionMethod}' not implemented.")
 
             # compute step size
             if stepMethod == 'backtracking':
-                alpha = linesearchBacktracking(self.objFunction, x, direction, self.gradFunction)
+                alpha = self.linesearchBacktracking(x, direction)
             elif stepMethod == 'fixed':
                 alpha = options.get('step_size', 1e-2) if options else 1e-2
             else:
@@ -105,10 +102,10 @@ class OptimizationProblem:
             x = x + alpha * direction
             fval = self.objFunction(x, *self.objFunctionArgs)
             grad = self.gradFunction(self.objFunction,x, *self.objFunctionArgs)
-            self.history['x'].append(x)
-            self.history['dir'].append(direction)
-            self.history['fval'].append(fval)
-            self.history['grad'].append(grad)
+            self.history['x'].append(x.copy())
+            self.history['dir'].append(direction.copy())
+            self.history['fval'].append(fval.copy())
+            self.history['grad'].append(grad.copy())
 
         return self.history
 
@@ -137,16 +134,53 @@ class OptimizationProblem:
         plt.ylabel(r'$x_2$')
         plt.title('Optimization trajectory - Iterations: {}'.format(len(x)-1))
         plt.legend()
+        plt.gca().set_aspect('equal', adjustable='box')
         
+    
+    def plotFunctionDecreaseHistory(self, history):
         
-        plt.figure()
         fval = np.array(history['fval'])
-        plt.semilogy(fval)
-        plt.xlabel('Iteration')
-        plt.ylabel('Objective function value')
-        plt.grid(alpha=0.2)
+        grad = np.array(history['grad'])
+        gradMag = np.zeros(fval.shape)
+        for i in range(len(gradMag)):
+            gradMag[i] = np.linalg.norm(grad[i])
+        
+        fig, axes = plt.subplots(1, 2, figsize=(10, 4))
+
+        # --- Left subplot: function value ---
+        axes[0].plot(fval, '-C0o')
+        axes[0].set_title("Function Value")
+        axes[0].set_xlabel("Iteration")
+        axes[0].set_ylabel("f")
+        axes[0].grid(alpha=0.2)
+
+        # --- Right subplot: gradient magnitude ---
+        axes[1].plot(gradMag, '-C1s')
+        axes[1].set_title("Gradient Magnitude")
+        axes[1].set_xlabel("Iteration")
+        axes[1].set_ylabel("|∇f|")
+        axes[1].grid(alpha=0.2)
+
+        plt.tight_layout()
         
 
+    def linesearchBacktracking(self, x0, dir, step=1.0, mu=1e-4, maxIter=100):
 
+        # Reference values (always used in Armijo)
+        f0 = self.objFunction(x0, *self.objFunctionArgs)
+        g0 = self.gradFunction(self.objFunction, x0, *self.objFunctionArgs)
+
+        it = 0
+        x = x0 + step * dir
+        fVal = self.objFunction(x, *self.objFunctionArgs)
+
+        # Armijo condition: f(x0 + α d) <= f(x0) + μ α g0^T d
+        while (fVal > f0 + mu * step * np.dot(g0, dir)) and it < maxIter:
+            step *= 0.5
+            x = x0 + step * dir
+            fVal = self.objFunction(x, *self.objFunctionArgs)
+            it += 1
+
+        return step
 
 

@@ -23,3 +23,5 @@ def complexStepGradient(f, x, *args, h=1e-12):
         x_step[i] += 1j * h
         grad[i] = np.imag(f(x_step, *args)) / h
     return grad
+
+
