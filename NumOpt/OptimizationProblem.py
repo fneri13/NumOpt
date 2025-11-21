@@ -192,14 +192,26 @@ class OptimizationProblem:
 
 
 
-    def plotSolutionHistory(self, history):
+    def plotSolutionHistory(self, history, logscale=False):
         """Plot trajectory of the optimization. Only for 2D problems
 
         Args:
             history (_type_): _description_
         """
+        self.plotFunction(logscale=logscale)
+        
+        x = np.array(history['x'])
+        plt.plot(x[:, 0], x[:, 1], 'r--^', label='Trajectory')
+        plt.plot(x[0, 0], x[0, 1], 'k^', label='Start')
+        plt.xlabel(r'$x_1$')
+        plt.ylabel(r'$x_2$')
+        plt.title('Optimization trajectory - Iterations: {}'.format(len(x)-1))
+        plt.legend()
+        plt.gca().set_aspect('equal', adjustable='box')
+    
+    def plotFunction(self, logscale=False):
         assert self.nDim == 2, "Plotting only implemented for 2D problems."
-        N = 250
+        N = 250        
         
         x = np.linspace(self.bounds[0][0], self.bounds[0][1], N)
         y = np.linspace(self.bounds[1][0], self.bounds[1][1], N)
@@ -210,17 +222,12 @@ class OptimizationProblem:
                 F[i, j] = self.objFunction([X[i, j], Y[i, j]], *self.objFunctionArgs)
         
         plt.figure()
-        plt.contourf(X, Y, F, levels=25, cmap='viridis')
-        plt.contour(X, Y, F, levels=25, colors='k', linewidths=0.25)
-        
-        x = np.array(history['x'])
-        plt.plot(x[:, 0], x[:, 1], 'r--^', label='Trajectory')
-        plt.plot(x[0, 0], x[0, 1], 'k^', label='Start')
-        plt.xlabel(r'$x_1$')
-        plt.ylabel(r'$x_2$')
-        plt.title('Optimization trajectory - Iterations: {}'.format(len(x)-1))
-        plt.legend()
-        plt.gca().set_aspect('equal', adjustable='box')
+        if logscale:
+            plt.contourf(X, Y, np.log(F), levels=25, cmap='viridis')
+            plt.contour(X, Y, np.log(F), levels=25, colors='k', linewidths=0.25)
+        else:
+            plt.contourf(X, Y, F, levels=25, cmap='viridis')
+            plt.contour(X, Y, F, levels=25, colors='k', linewidths=0.25)
         
     
     def plotFunctionDecreaseHistory(self, history):
