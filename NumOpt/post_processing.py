@@ -13,8 +13,8 @@ def plot_histories(histories, labels, xlog=(False, False), ylog=(False, True)):
         for k in range(len(gradMag)):
             gradMag[k] = np.linalg.norm(grad[k])
         
-        axes[0].plot(fval, '-', mfc='none', label=labels[i])
-        axes[1].plot(gradMag, '-', mfc='none')
+        axes[0].plot(fval[1:], '-', mfc='none', label=labels[i])
+        axes[1].plot(gradMag[1:], '-', mfc='none')
     
     axes[0].set_title("Function Value")
     axes[0].set_xlabel("Iteration")
